@@ -1,0 +1,20 @@
+#!/bin/bash
+
+echo "ALL LINES:"
+winsumrest
+echo ""
+
+echo "STRANGE LINES:"
+winsumrest | grep -v "^ *rest \+\([0-9]\+\) \+min" 
+
+echo ""
+
+echo "SUMMING LINES:"
+b=0
+winsumrest | grep "^ *rest \+\([0-9]\+\) \+min" | sed -e "s/^.*rest \+\([0-9]\+\) \+min.*$/\1/" | while read a; do b=$(($b + $a)); echo "$b"; done
+
+RESULT_VALUE=$(winsumrest | grep "^ *rest \+\([0-9]\+\) \+min" | sed -e "s/^.*rest \+\([0-9]\+\) \+min.*$/\1/" | while read a; do  b=$(($b + $a)); echo "$b"; done | tail -n1)
+
+echo ""
+echo "RESULT"
+echo "$RESULT_VALUE min"

@@ -1,0 +1,3 @@
+#!/bin/bash
+
+ls -1 /home/leonid/bin/linux-app-logger/winlog_* | grep "/winlog_20[0-9][0-9]-[0-9][0-9]-[0-9][0-9]$" | tail -n1
