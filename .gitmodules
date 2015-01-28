@@ -1,0 +1,3 @@
+[submodule "linux-app-logger"]
+	path = linux-app-logger
+	url = git@github.com:LeonidBeynenson/linux-app-logger.git
