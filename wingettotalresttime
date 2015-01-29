@@ -22,6 +22,7 @@ TOTAL_TIME_M=$(calc -p "$LAST_TIME_H*60 + $LAST_TIME_M - $FIRST_TIME_H*60 - $FIR
 echo "TOTAL_TIME_M = '$TOTAL_TIME_M'"
 
 WINSUMREST=$(winsumrest2 | tail -n1 | sed -e "s/ .*//")
+WINSUMREST=$(( $WINSUMREST ))
 echo "WINSUMREST = '$WINSUMREST'"
 
 INPUT_REST_TIME=$1
