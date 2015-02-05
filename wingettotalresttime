@@ -10,20 +10,29 @@ echo "LAST_TIME = $LAST_TIME"
 
 FIRST_TIME_H=$(echo "$FIRST_TIME" | cut -d ' ' -f 1 | sed -e "s/^[ 0]*//")
 FIRST_TIME_M=$(echo "$FIRST_TIME" | cut -d ' ' -f 2 | sed -e "s/^[ 0]*//")
+FIRST_TIME_H=$(( $FIRST_TIME_H ))
+FIRST_TIME_M=$(( $FIRST_TIME_M ))
 echo "FIRST_TIME_H = '$FIRST_TIME_H'"
 echo "FIRST_TIME_M = '$FIRST_TIME_M'"
 
 LAST_TIME_H=$(echo "$LAST_TIME" | cut -d ' ' -f 1 | sed -e "s/^[ 0]*//")
 LAST_TIME_M=$(echo "$LAST_TIME" | cut -d ' ' -f 2 | sed -e "s/^[ 0]*//")
+LAST_TIME_H=$(( $LAST_TIME_H ))
+LAST_TIME_M=$(( $LAST_TIME_M ))
 echo "LAST_TIME_H = '$LAST_TIME_H'"
 echo "LAST_TIME_M = '$LAST_TIME_M'"
 
 TOTAL_TIME_M=$(calc -p "$LAST_TIME_H*60 + $LAST_TIME_M - $FIRST_TIME_H*60 - $FIRST_TIME_M" | sed -e "s/[^0-9.]//g")
 echo "TOTAL_TIME_M = '$TOTAL_TIME_M'"
+echo "TOTAL_TIME =" $(($TOTAL_TIME_M / 60 )) "h" $(($TOTAL_TIME_M - $(($TOTAL_TIME_M / 60)) * 60)) "min"
+echo ""
 
 WINSUMREST=$(winsumrest2 | tail -n1 | sed -e "s/ .*//")
 WINSUMREST=$(( $WINSUMREST ))
+WINSUMREST_H=$(($WINSUMREST / 60))
+WINSUMREST_M=$(($WINSUMREST - $WINSUMREST_H * 60))
 echo "WINSUMREST = '$WINSUMREST'"
+echo "WINSUMREST = $WINSUMREST_H h $WINSUMREST_M min"
 
 INPUT_REST_TIME=$1
 INPUT_REST_TIME_H=$(echo "$INPUT_REST_TIME" | sed -e "s/[^0-9]/ /g" | sed -e "s/^ *//" | sed -e "s/ \+/ /g" | cut -d ' ' -f 1 | sed -e "s/^[ 0]*//")
