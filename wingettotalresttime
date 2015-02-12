@@ -1,6 +1,6 @@
 #!/bin/bash
-FIRST_LINE=$(head -n1 $(winnamelog) )
-LAST_LINE=$(tail -n1 $(winnamelog) )
+FIRST_LINE=$(grep -v "^ *$" $(winnamelog) | head -n1 )
+LAST_LINE=$(grep -v "^ *$" $(winnamelog) | tail -n1 )
 
 FIRST_TIME=$(echo "$FIRST_LINE" | sed -e "s/^[^_]*_\([0-9]\+\)-\([0-9]\+\)-\([0-9]\+\)[^0-9-].*/\1 \2 \3/")
 LAST_TIME=$(echo "$LAST_LINE" | sed -e "s/^[^_]*_\([0-9]\+\)-\([0-9]\+\)-\([0-9]\+\)[^0-9-].*/\1 \2 \3/")
