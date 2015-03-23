@@ -1,2 +1,2 @@
 #!/bin/bash
-ps ax | fgrep "python ./logger.py winlog" | fgrep -v grep| sed -e "s/^ *\([0-9]\+\) .*/\1/" | while read a; do echo "killing $a"; kill -9 $a; done
+ps ax | fgrep "python ./logger.py " | fgrep -v grep| sed -e "s/^ *\([0-9]\+\) .*/\1/" | while read a; do echo "killing $a"; kill -9 $a; done

@@ -1,2 +1,2 @@
 #!/bin/bash
-ps ax | fgrep " python ./logger.py winlog" | fgrep -v grep
+ps ax | fgrep " python ./logger.py " | fgrep -v grep
