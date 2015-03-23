@@ -1,0 +1,12 @@
+#!/bin/bash
+
+NUM_LINES_WITH_TERMINAL=$(cat $(winnamelog) | grep "^[0-9_-]\+\sgnome-terminal.Gnome-terminal" | grep -v "^[0-9_-]\+\sgnome-terminal.Gnome-terminal\s*leonid@leonid-pc: ~$" | wc -l)
+NUM_LINES_WITH_TERMINAL=$(( $NUM_LINES_WITH_TERMINAL ))
+TIMEOUT=15
+NUM_MINUTES_WITH_TERMINAL=$(( $NUM_LINES_WITH_TERMINAL / (60 / $TIMEOUT) ))
+
+TIME_WITH_TERMINAL_H=$(( $NUM_MINUTES_WITH_TERMINAL / 60 ))
+TIME_WITH_TERMINAL_M=$(( $NUM_MINUTES_WITH_TERMINAL  - $TIME_WITH_TERMINAL_H * 60 ))
+
+echo "Total time in terminal = $NUM_MINUTES_WITH_TERMINAL min = $TIME_WITH_TERMINAL_H h $TIME_WITH_TERMINAL_M min"
+
