@@ -1,5 +1,10 @@
 #!/bin/sh
-cd /home/leonid/bin/linux-app-logger
-#./logger.py winlog_`ddate` 30 stopfile 2>>2_stream.log
-./logger.py ~/worklog 15 2>>2_stream.log
 
+winchecklog > /dev/null
+if [ $? != 0 ]; then
+	echo "Starting the logger"
+	winstartlog_always
+	winchecklog
+else
+	echo "Logger already works"
+fi
