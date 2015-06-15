@@ -5,6 +5,7 @@ import re
 import sys
 import datetime
 import texttable as tt
+import os
 
 LINE_STR = ("=" * 100)
 
@@ -16,6 +17,21 @@ def print_table(list_of_rows):
         tab.add_row(row)
 
     print tab.draw()
+
+def DEFAULT_FOLDER_WITH_LOGS():
+    return "/home/leonid/worklog/"
+
+def get_default_worklog():
+    filelist = os.listdir(DEFAULT_FOLDER_WITH_LOGS())
+    re_worklog = re.compile(r'winlog_\d\d\d\d-\d\d-\d\d$')
+    filtered_filelist = [s for s in filelist if re_worklog.match(s)]
+
+    if not filtered_filelist:
+        return None
+
+    filtered_filelist.sort()
+    filename = os.path.join(DEFAULT_FOLDER_WITH_LOGS(), filtered_filelist[-1])
+    return filename
 
 def _str_timedelta(dt):
     assert(dt.days >= 0)
@@ -77,6 +93,7 @@ def parse_file(filename):
     dt_total_time = last_time - first_time
 
     print "dt_total_time = " + str(dt_total_time)
+    print
 
     total_rest_minutes = sum(rest_array)
     print "total_rest_minutes = " + str(total_rest_minutes)
@@ -170,5 +187,17 @@ def parse_file(filename):
 
 
 if __name__ == "__main__":
-    parse_file(sys.argv[1])
+    filename = None
+    if len(sys.argv) > 1:
+        filename = sys.argv[1]
+    else:
+        filename = get_default_worklog()
+
+    if not filename:
+        print "ERROR -- cannot get the last worklog"
+        exit(1)
+
+    print "filename =", filename
+
+    parse_file(filename)
 
