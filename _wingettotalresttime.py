@@ -6,11 +6,11 @@ import sys
 import datetime
 import texttable as tt
 
-LINE_STR = "//////////////////////////////////////////////////////////////////////////////////////////////////////"
+LINE_STR = ("=" * 100)
 
 def print_table(list_of_rows):
     tab = tt.Texttable(max_width = 0)
-    tab.set_chars(['-', '|', '-', '-'])
+    tab.set_chars(['', '=', '', ''])
     tab.set_deco(tt.Texttable.VLINES| tt.Texttable.BORDER)
     for row in list_of_rows:
         tab.add_row(row)
@@ -86,6 +86,9 @@ def parse_file(filename):
 
     dt_total_rest_time = datetime.timedelta(minutes = total_rest_minutes)
     print "dt_total_rest_time = " + str(dt_total_rest_time)
+    print "num of rests = " + str(len(rest_array))
+    str_rest_array = [str(v) for v in rest_array]
+    print "rests = [" + ",".join(str_rest_array) + "]"
 
     dt_total_time_no_rest = dt_total_time - dt_total_rest_time
 
@@ -167,6 +170,5 @@ def parse_file(filename):
 
 
 if __name__ == "__main__":
-    print ("\n" * 10)
     parse_file(sys.argv[1])
 
