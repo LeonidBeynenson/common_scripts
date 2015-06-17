@@ -46,6 +46,16 @@ def str_timedelta(dt):
         return "-" + _str_timedelta(-dt)
     return _str_timedelta(dt)
 
+def timedelta_from_seconds(val):
+    return datetime.timedelta(seconds = int(val))
+
+def str_time_or_day(datetime_val):
+    val_date = datetime_val.date()
+    now_date = datetime.datetime.now().date()
+    if (val_date == now_date):
+        return str(datetime_val.time())
+    return "not today"
+
 def parse_file(filename):
     first_time = None
     last_time = None
@@ -135,7 +145,7 @@ def parse_file(filename):
     assert(speed_of_rest >= 0)
     assert(speed_of_rest <= 1)
 
-    coeff_to_approx = 1.0 / (1.0 - speed_of_rest)
+    coeff_to_approx = 1.0 / (1.0 - speed_of_rest - 0.0001)
     print "speed_of_rest = {:.2}\n(coeff_to_approx = {:.2})".format(speed_of_rest, coeff_to_approx)
 
     print
@@ -146,7 +156,7 @@ def parse_file(filename):
 
     print_table([
         ["dt_approx_time_to_make_the_target", str_timedelta(dt_approx_time_to_make_the_target)],
-        ["approx_time_of_target_fulfill", approx_time_of_target_fulfill.time()]
+        ["approx_time_of_target_fulfill", str_time_or_day(approx_time_of_target_fulfill)]
         ])
 
 
@@ -156,18 +166,22 @@ def parse_file(filename):
 
     time_to_go = datetime.datetime.combine(last_time, datetime.time(hour = 20, tzinfo = last_time.time().tzinfo))
     dt_time_to_job_if_go_intime = time_to_go - last_time
-    dt_approx_additional_rest_time_if_go_in_time = datetime.timedelta(seconds = int(dt_time_to_job_if_go_intime.total_seconds() * speed_of_rest) )
+    dt_approx_additional_rest_time_if_go_in_time = timedelta_from_seconds(dt_time_to_job_if_go_intime.total_seconds() * speed_of_rest)
     dt_approx_arrears__if_go_in_time = dt_time_to_should_work_for_target - dt_time_to_job_if_go_intime + dt_approx_additional_rest_time_if_go_in_time
     ideal_arrears__if_go_in_time = ideal_time_of_target - time_to_go
 
+    _dt_time_to_job_minus_cur_arrears = dt_time_to_job_if_go_intime - dt_time_to_should_work_for_target
+    time_to_start_work_hard = last_time + timedelta_from_seconds(_dt_time_to_job_minus_cur_arrears.total_seconds() / (speed_of_rest + 0.0001))
+
     print_table([
-        ["time_to_go", time_to_go.time()],
+        ["time_to_go", str_time_or_day(time_to_go)],
         ["dt_time_to_job_if_go_intime", str_timedelta(dt_time_to_job_if_go_intime)],
         ["dt_approx_additional_rest_time_if_go_in_time", str_timedelta(dt_approx_additional_rest_time_if_go_in_time)],
         ])
     print_table([
         ["APPROX_ARREARS__IF_GO_IN_TIME", str_timedelta(dt_approx_arrears__if_go_in_time)],
-        ["IDEAL_ARREARS__IF_GO_IN_TIME", str_timedelta(ideal_arrears__if_go_in_time)]
+        ["IDEAL_ARREARS__IF_GO_IN_TIME", str_timedelta(ideal_arrears__if_go_in_time)],
+        ["TIME_TO_START_WORK_HARD", str_time_or_day(time_to_start_work_hard)]
         ])
 
 
@@ -177,7 +191,7 @@ def parse_file(filename):
     print "CURRENT_ARREARS:"
     print_table([
         ["TIME_TO_SHOULD_WORK_FOR_TARGET", str_timedelta(dt_time_to_should_work_for_target)],
-        ["ideal_time_of_target", ideal_time_of_target.time()]
+        ["ideal_time_of_target", str_time_or_day(ideal_time_of_target)]
         ])
 
 #    first_datetime = datetime.datetime(*first_time[:6])
