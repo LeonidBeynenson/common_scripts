@@ -50,6 +50,9 @@ def timedelta_from_seconds(val):
     return datetime.timedelta(seconds = int(val))
 
 def str_time_or_day(datetime_val):
+    if not datetime_val:
+        return "None"
+
     val_date = datetime_val.date()
     now_date = datetime.datetime.now().date()
     if (val_date == now_date):
@@ -170,8 +173,25 @@ def parse_file(filename):
     dt_approx_arrears__if_go_in_time = dt_time_to_should_work_for_target - dt_time_to_job_if_go_intime + dt_approx_additional_rest_time_if_go_in_time
     ideal_arrears__if_go_in_time = ideal_time_of_target - time_to_go
 
-    _dt_time_to_job_minus_cur_arrears = dt_time_to_job_if_go_intime - dt_time_to_should_work_for_target
-    time_to_start_work_hard = last_time + timedelta_from_seconds(_dt_time_to_job_minus_cur_arrears.total_seconds() / (speed_of_rest + 0.0001))
+    #begin calculation of time_to_start_work_hard
+    speed_of_rest_ideal = 0.1
+    print "speed_of_rest_ideal =", speed_of_rest_ideal
+    _dt_time_to_job_with_coeff__minus__cur_arrears_seconds = (
+            (1 - speed_of_rest_ideal) * dt_time_to_job_if_go_intime.total_seconds()
+            -
+            dt_time_to_should_work_for_target.total_seconds()
+            )
+    delta_speeds_of_rest = speed_of_rest - speed_of_rest_ideal
+#    print "(dt_time_to_job_if_go_intime.total_seconds() =", dt_time_to_job_if_go_intime.total_seconds()
+#    print "(dt_time_to_should_work_for_target.total_seconds() =", dt_time_to_should_work_for_target.total_seconds()
+#    print "(_dt_time_to_job_with_coeff__minus__cur_arrears_seconds =", _dt_time_to_job_with_coeff__minus__cur_arrears_seconds
+#    print "(delta_speeds_of_rest =", delta_speeds_of_rest
+
+    if delta_speeds_of_rest > 0:
+        time_to_start_work_hard = last_time + timedelta_from_seconds(_dt_time_to_job_with_coeff__minus__cur_arrears_seconds / delta_speeds_of_rest )
+    else:
+        time_to_start_work_hard = None
+    #end calculation of time_to_start_work_hard
 
     print_table([
         ["time_to_go", str_time_or_day(time_to_go)],
