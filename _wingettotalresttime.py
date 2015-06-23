@@ -70,10 +70,10 @@ def parse_file(filename):
 
     lines = [line.rstrip(' \n') for line in open(filename)]
 
-    last_start_of_sitting_date = ""
+    last_start_of_sitting_date = None
     for line in lines:
         if not line:
-            last_start_of_sitting_date = ""
+            last_start_of_sitting_date = None
             continue # it may be a bit faster, although worser for debugging
 
         date_match = date_re.match(line)
@@ -140,9 +140,10 @@ def parse_file(filename):
 #    print "ideal_time_of_target = " + str(ideal_time_of_target.time())
 
 
-    print
-    print "last_start_of_sitting_time = " + str(last_start_of_sitting_date.time())
-    print "time of sitting = " + str_timedelta(last_time - last_start_of_sitting_date)
+    if last_start_of_sitting_date:
+        print
+        print "last_start_of_sitting_time = " + str(last_start_of_sitting_date.time())
+        print "time of sitting = " + str_timedelta(last_time - last_start_of_sitting_date)
 
 
     print
