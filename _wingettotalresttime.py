@@ -6,6 +6,7 @@ import sys
 import datetime
 import texttable as tt
 import os
+import termcolor
 
 LINE_STR = ("=" * 100)
 
@@ -69,9 +70,11 @@ def parse_file(filename):
 
     lines = [line.rstrip(' \n') for line in open(filename)]
 
+    last_start_of_sitting_date = ""
     for line in lines:
-#        if not line:
-#            continue
+        if not line:
+            last_start_of_sitting_date = ""
+            continue # it may be a bit faster, although worser for debugging
 
         date_match = date_re.match(line)
         rest_match = rest_re.match(line)
@@ -83,6 +86,9 @@ def parse_file(filename):
                 first_time = tuple_time
 
             last_time = tuple_time
+
+            if not last_start_of_sitting_date:
+                last_start_of_sitting_date = tuple_time
 
             line = "date (" + curdate + ")=" + str(tuple_time) + ":" + line
 
@@ -134,6 +140,9 @@ def parse_file(filename):
 #    print "ideal_time_of_target = " + str(ideal_time_of_target.time())
 
 
+    print
+    print "last_start_of_sitting_time = " + str(last_start_of_sitting_date.time())
+    print "time of sitting = " + str_timedelta(last_time - last_start_of_sitting_date)
 
 
     print
@@ -201,7 +210,7 @@ def parse_file(filename):
     print_table([
         ["APPROX_ARREARS__IF_GO_IN_TIME", str_timedelta(dt_approx_arrears__if_go_in_time)],
         ["IDEAL_ARREARS__IF_GO_IN_TIME", str_timedelta(ideal_arrears__if_go_in_time)],
-        ["TIME_TO_START_WORK_HARD", str_time_or_day(time_to_start_work_hard)]
+        ["TIME_TO_START_WORK_HARDER", str_time_or_day(time_to_start_work_hard)]
         ])
 
 
