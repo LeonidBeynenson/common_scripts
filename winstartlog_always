@@ -1,5 +1,5 @@
 #!/bin/sh
-cd /home/leonid/bin/linux-app-logger
+cd /home/lbeynens//bin/linux-app-logger
 #./logger.py winlog_`ddate` 30 stopfile 2>>2_stream.log
 ./logger.py ~/worklog 15 2>>2_stream.log
 

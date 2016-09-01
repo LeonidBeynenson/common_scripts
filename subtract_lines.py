@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-import time
 import re
 import sys
 import datetime

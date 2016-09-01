@@ -20,7 +20,8 @@ def print_table(list_of_rows):
     print tab.draw()
 
 def DEFAULT_FOLDER_WITH_LOGS():
-    return "/home/leonid/worklog/"
+    #return "/home/leonid/worklog/"
+    return "/home/lbeynens//worklog/"
 
 def get_default_worklog():
     filelist = os.listdir(DEFAULT_FOLDER_WITH_LOGS())
@@ -67,12 +68,13 @@ def parse_file(filename):
 
     date_re = re.compile(r'^[0-9-_]+')
     rest_re = re.compile(r'^rest +(\d+) +min')
+    something_re = re.compile(r'^\s*[a-zA-Z0-9_-]')
 
     lines = [line.rstrip(' \n') for line in open(filename)]
 
     last_start_of_sitting_date = None
     for line in lines:
-        if not line:
+        if not something_re.match(line):
             last_start_of_sitting_date = None
             continue # it may be a bit faster, although worser for debugging
 
