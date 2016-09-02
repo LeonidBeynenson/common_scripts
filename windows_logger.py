@@ -25,6 +25,8 @@ class TaskBarApp(wx.Frame):
         self.LOGON_ICON_PATH = os.path.join(self.ICONS_FOLDER, 'logon.ico')
         self.LOGOFF_ICON_PATH = os.path.join(self.ICONS_FOLDER, 'logoff.ico')
 
+        self.COMPUTER_PREFIX = "P"
+
         print "Will log into", self.LOG_FILE_PATH
 
         self.ICON_STATE = 1
@@ -91,7 +93,7 @@ class TaskBarApp(wx.Frame):
                 if not self.WAS_ACTIVE:
                     dt_sleep = time() - self.TIME_OF_SCREENSAVER_START
                     if dt_sleep > 60:
-                        log_line_from_screensaver_work = "rest {} min??????????????????????????????".format(int(dt_sleep/60))
+                        log_line_from_screensaver_work = "rest {} min on {} ??????????????????????????????".format(int(dt_sleep/60), self.COMPUTER_PREFIX)
                         self.Write("\n" + log_line_from_screensaver_work + "\n\n")
 #                    else: #very small rest
 #                        self.Write("\n") #is it required?
@@ -111,7 +113,7 @@ class TaskBarApp(wx.Frame):
             traceback.print_exc(None, None);
 
     def WriteLog(self, text, idle_time):
-        log_line = '%s\t%-100s\t%f sec\n' % (self.Now(), text, float(idle_time))
+        log_line = '%s\t%s\t%-100s\t%f sec\n' % (self.Now(), self.COMPUTER_PREFIX, text, float(idle_time))
         self.Write(log_line)
 
     def Write(self, log_line):
