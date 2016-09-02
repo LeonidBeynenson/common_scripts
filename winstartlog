@@ -8,3 +8,12 @@ if [ $? != 0 ]; then
 else
 	echo "Logger already works"
 fi
+
+wincheckdaemonlock > /dev/null
+if [ $? != 0 ]; then
+	echo "Starting the daemonlock"
+	winstartdaemonlock_always
+	wincheckdaemonlock
+else
+	echo "Daemonlock already works"
+fi

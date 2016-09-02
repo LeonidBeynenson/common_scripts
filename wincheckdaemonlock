@@ -1,0 +1,2 @@
+#!/bin/bash
+ps ax | fgrep " python ./daemon_is_screen_locked.py " | fgrep -v grep
