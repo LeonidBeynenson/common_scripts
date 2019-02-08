@@ -51,20 +51,24 @@ class LogFileHandling:
         return "/home/lbeynens//worklog/"
 
     @staticmethod
-    def current_worklog_name():
-        return "winlog_" + time.strftime("%Y-%m-%d")
+    def current_worklog_name(date_suffix = None):
+        if date_suffix is None:
+            return "winlog_" + time.strftime("%Y-%m-%d")
+        else:
+            return "winlog_" + date_suffix
+
 
     @staticmethod
-    def current_worklog_path():
-        return os.path.join(LogFileHandling.DEFAULT_FOLDER_WITH_LOGS(), LogFileHandling.current_worklog_name())
+    def current_worklog_path(date_suffix = None):
+        return os.path.join(LogFileHandling.DEFAULT_FOLDER_WITH_LOGS(), LogFileHandling.current_worklog_name(date_suffix))
 
     @staticmethod
-    def current_worklog_remote_path():
-        return LogFileHandling.current_worklog_path()
+    def current_worklog_remote_path(date_suffix = None):
+        return LogFileHandling.current_worklog_path(date_suffix)
 
     @staticmethod
-    def current_worklog_path_from_remote():
-        return LogFileHandling.current_worklog_path() + ".remote"
+    def current_worklog_path_from_remote(date_suffix = None):
+        return LogFileHandling.current_worklog_path(date_suffix) + ".remote"
 
 #    @staticmethod
 #    def scp_from_remote(ip_final_part):
@@ -249,6 +253,8 @@ class FirstLastTimeDetector:
         (first_time2, last_time2) = FirstLastTimeDetector.get_first_last_time_from_file(file_path2)
         if (first_time2 == None) or (last_time2 == None):
             return (first_time1, last_time1)
+        if (first_time1 == None) or (last_time1 == None):
+            return (first_time2, last_time2)
         return ( min(first_time1, first_time2), max(last_time1, last_time2) )
 
 class Reader:
@@ -371,6 +377,8 @@ class Reader:
         return data
 
 def merge_data(data1, data2):
+    if (data1 == None):
+        return data2
     if (data2 == None):
         return data1
 
@@ -431,6 +439,9 @@ def merge_data(data1, data2):
     return merged_data
 
 def calculate_time_info(data):
+    if data is None:
+        return None
+
     num_rest_items_from_list = 0;
     num_work_items_from_list = 0;
 
@@ -607,22 +618,34 @@ if __name__ == "__main__":
 #        LogFileHandling.scp_from_remote(ip_final_part)
 
     should_print_whole_table = False
+    date_suffix = None
     if (len(sys.argv) > 1):
         if (sys.argv[1] == "all"):
             should_print_whole_table = True
+        else:
+            # TODO: use ArgumentParser
+            date_suffix = sys.argv[1]
+            print "date_suffix =", date_suffix
 
-    file1 = LogFileHandling.current_worklog_path()
-    file2 = LogFileHandling.current_worklog_path_from_remote()
+    file1 = LogFileHandling.current_worklog_path(date_suffix)
+    file2 = LogFileHandling.current_worklog_path_from_remote(date_suffix)
 
     (total_first_time, total_last_time) = FirstLastTimeDetector.get_first_last_time_from_files(file1, file2)
 
-    reader1 = Reader(file1, total_first_time, total_last_time, is_remote=False)
+    if os.path.isfile(file1):
+        reader1 = Reader(file1, total_first_time, total_last_time, is_remote=False)
+    else:
+        reader1 = None
+
     if os.path.isfile(file2):
         reader2 = Reader(file2, total_first_time, total_last_time, is_remote=True)
     else:
         reader2 = None
 
-    data1 = reader1.parse()
+    if reader1:
+        data1 = reader1.parse()
+    else:
+        data1 = None
 
     if reader2:
         data2 = reader2.parse()

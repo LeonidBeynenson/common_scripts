@@ -7,12 +7,12 @@ if [ "x$IP" == "x" ]; then
 fi
 
 #if present and non-empty then it is true
-SHOULD_ALL=$2
+NUM_DAYS=$2
 
 echo "IP=$IP"
-if [ "x$SHOULD_ALL" != "x" ]; then
-	echo "Synchronyze all folder"
-	A=$(ssh $IP "find ~/worklog -type f -name 'winlog*'" | grep -v "err$")
+if [ "x$NUM_DAYS" != "x" ]; then
+	echo "Synchronyze $NUM_DAYS days (or a bit more)"
+	A=$(ssh $IP "find ~/worklog -type f -name 'winlog*' -mtime -$NUM_DAYS" | grep -v "err$")
 else
 	echo "Synchronyze couple of last files"
 	A=$(ssh $IP "find ~/worklog -type f -name 'winlog*' -mtime -1" | grep -v "err$")
