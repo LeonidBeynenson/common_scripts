@@ -502,7 +502,11 @@ def print_time_info(time_info):
     TARGET_TIME = 5.5 # hours
     time_to_should_work_for_target = datetime.timedelta(hours = TARGET_TIME) - datetime.timedelta(seconds = int(time_info["num_work_items"]) * DEFAULT_TIME_STEP_IN_SECONDS())
     ideal_time_of_target = datetime.datetime.now() + time_to_should_work_for_target
-    print "TIME_TO_SHOULD_WORK_FOR_TARGET =", time_to_should_work_for_target
+    if time_to_should_work_for_target.days >= 0:
+        time_to_should_work_for_target_str = str(time_to_should_work_for_target)
+    else:
+        time_to_should_work_for_target_str = "-" + str(datetime.timedelta() - time_to_should_work_for_target)
+    print "TIME_TO_SHOULD_WORK_FOR_TARGET =", time_to_should_work_for_target_str
     print "IDEAL_TIME_OF_TARGET =", ideal_time_of_target.strftime("%H:%M:%S")
 
 def print_data_as_list(data, should_shorten = False):
