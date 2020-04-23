@@ -616,28 +616,15 @@ def print_data_as_table(data1, data2 = None, data3 = None):
     print_table(table_rows)
 
 
-if __name__ == "__main__":
-#    ip_final_part = None
-#    if len(sys.argv) > 1:
-#        ip_final_part = int(sys.argv[1])
-#
-#    if ip_final_part:
-#        LogFileHandling.scp_from_remote(ip_final_part)
+def main_for_one_file(date_suffix, should_print_whole_table):
+    LEN_SMALL_HRULE = 60
+    LEN_BIG_HRULE = 80
+    HRULE = "=" * LEN_SMALL_HRULE
+    HEADING_HRULE = "=" * LEN_BIG_HRULE
+    what_parsing = "parsing {}".format(date_suffix) if date_suffix else "parsing current date"
 
-    should_print_whole_table = False
-    date_suffix = None
-    if (len(sys.argv) > 1):
-        if (sys.argv[1] == "all"):
-            should_print_whole_table = True
-        else:
-            # TODO: use ArgumentParser
-            date_suffix = sys.argv[1]
-            winlog_prefix = "winlog_"
-            if winlog_prefix in date_suffix:
-                print "Since input_param is", date_suffix, "remove the first part of it to get date_suffix"
-                index = date_suffix.rfind(winlog_prefix )
-                date_suffix = date_suffix[index + len(winlog_prefix):]
-            print "date_suffix =", date_suffix
+    print(HEADING_HRULE)
+    print "Begin " + what_parsing
 
     file1 = LogFileHandling.current_worklog_path(date_suffix)
     file2 = LogFileHandling.current_worklog_path_from_remote(date_suffix)
@@ -668,7 +655,7 @@ if __name__ == "__main__":
 
     time_info = calculate_time_info(data_merged)
 
-    print ("=" * 80)
+    print (HRULE)
     print "Local"
     print_data_as_list(data1)
     print ""
@@ -678,14 +665,54 @@ if __name__ == "__main__":
     print "Merged"
     print_data_as_list(data_merged)
 
-    print ("=" * 80)
+    print (HRULE)
     print "Merged shortened"
     print_data_as_list(data_merged, True)
 
     if should_print_whole_table:
-        print ("=" * 80)
+        print (HRULE)
         print_data_as_table(data1, data2, data_merged)
 
-    print ("=" * 80)
+    print (HRULE)
     print_time_info(time_info)
+
+    print (HRULE)
+    print "End " + what_parsing
+    print(HEADING_HRULE)
+
+def main(date_suffixes, should_print_whole_table):
+    if not date_suffixes:
+        main_for_one_file(None, should_print_whole_table)
+        return
+
+    for date_suffix in date_suffixes:
+        main_for_one_file(date_suffix, should_print_whole_table)
+
+if __name__ == "__main__":
+#    ip_final_part = None
+#    if len(sys.argv) > 1:
+#        ip_final_part = int(sys.argv[1])
+#
+#    if ip_final_part:
+#        LogFileHandling.scp_from_remote(ip_final_part)
+
+    should_print_whole_table = False
+    date_suffixes = []
+    for cur_arg in sys.argv[1:]:
+        # TODO: use ArgumentParser
+
+        if (cur_arg == "all"):
+            should_print_whole_table = True
+            continue
+
+        date_suffix = cur_arg
+        winlog_prefix = "winlog_"
+        if winlog_prefix in date_suffix:
+            print "Since input_param is", date_suffix, "remove the first part of it to get date_suffix"
+            index = date_suffix.rfind(winlog_prefix )
+            date_suffix = date_suffix[index + len(winlog_prefix):]
+        print "date_suffix =", date_suffix
+        date_suffixes.append(date_suffix)
+
+    main(date_suffixes, should_print_whole_table)
 
