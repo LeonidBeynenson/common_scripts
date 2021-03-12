@@ -1,5 +1,6 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
+import argparse
 import re
 import sys
 import subprocess
@@ -18,7 +19,7 @@ def print_table(list_of_rows):
     for row in list_of_rows:
         tab.add_row(row)
 
-    print tab.draw()
+    print(tab.draw())
 
 
 date_re = re.compile(r'^[0-9-_]+')
@@ -194,7 +195,7 @@ class Data:
         delta1 = last_time - first_time
         assert (delta1.days == 0), str(delta1)
         if delta1.days > 0:
-            print "WARNING: number of days =", delta1.days
+            print("WARNING: number of days =", delta1.days)
         required_len = 1 + int(delta1.seconds) // DEFAULT_TIME_STEP_IN_SECONDS()
 
         self.first_time = first_time
@@ -231,7 +232,7 @@ class FirstLastTimeDetector:
         first_time = None
         last_time = None
 
-        if not os.path.isfile(file_path):
+        if not file_path or not os.path.isfile(file_path):
             return (None, None)
 
         with open(file_path, "r") as f:
@@ -270,7 +271,7 @@ class Reader:
         self.clean_state(prev_index = None, prev_time = None)
 
     def clean_state(self, prev_index, prev_time):
-#        print "clean_state: prev_index =", prev_index, "prev_time =", prev_time
+#        print("clean_state: prev_index =", prev_index, "prev_time =", prev_time)
         self.prev_filled_index = prev_index
         self.prev_filled_time = prev_time
         self.is_rest = False
@@ -293,22 +294,22 @@ class Reader:
             return #TODO: think about that
 
         prev = self.prev_filled_index #just alias
-#        print "prev =", prev, "cur_index =", cur_index, "len(data.items) =", len(data.items)
+#        print("prev =", prev, "cur_index =", cur_index, "len(data.items) =", len(data.items))
         assert( (prev >= 0) and (prev < len(data.items)) and (prev < cur_index))
 
         cur_state = None
         if not self.is_rest and not self.is_rest_q and not self.is_rest_definitely:
             cur_state = State.may_be_work
         elif self.is_rest_q and self.is_rest_definitely:
-            print ("WARNING: in the file '{}' in the time segment from {} to {} both 'definitely rest' and 'may be rest' marks are present " \
+            print("WARNING: in the file '{}' in the time segment from {} to {} both 'definitely rest' and 'may be rest' marks are present " \
                     + "-- make the segment to be 'definitely rest'").format(self.file_path, self.prev_filled_time, self.cur_time)
             cur_state = State.must_be_rest
         elif self.is_rest and self.is_rest_definitely:
-            print ("WARNING: in the file '{}' in the time segment from {} to {} both 'definitely rest' and 'rest' marks are present " \
+            print("WARNING: in the file '{}' in the time segment from {} to {} both 'definitely rest' and 'rest' marks are present " \
                     + "-- make the segment to be 'definitely rest'").format(self.file_path, self.prev_filled_time, self.cur_time)
             cur_state = State.must_be_rest
         elif self.is_rest and self.is_rest_q:
-            print ("WARNING: in the file '{}' in the time segment from {} to {} both 'may be rest' and 'rest' marks are present " \
+            print("WARNING: in the file '{}' in the time segment from {} to {} both 'may be rest' and 'rest' marks are present " \
                     + "-- make the segment to be 'may be rest'").format(self.file_path, self.prev_filled_time, cur_time)
             cur_state = State.may_be_rest
         elif  self.is_rest_definitely:
@@ -334,7 +335,7 @@ class Reader:
         if self.is_remote and (cur_state == State.must_be_rest):
             cur_state = State.may_be_rest
 
-        for index in xrange(prev+1, cur_index):
+        for index in range(prev+1, cur_index):
             data.items[index] = cur_state
 
         pass
@@ -397,7 +398,7 @@ def merge_data(data1, data2):
     merged_data = Data(data_loc.first_time, data_loc.last_time)
     merged_data.special_time_segments = data_loc.special_time_segments
 
-    for index in xrange(0, len(merged_data.items)):
+    for index in range(0, len(merged_data.items)):
         item1 = data_loc.items[index]
         item2 = data_rem.items[index]
 
@@ -418,7 +419,7 @@ def merge_data(data1, data2):
                 continue
 
             if (item1 == State.must_be_rest) and (item2 == State.must_be_work):
-                print ("Warning: conflict during merging, setting must_be_work state: in the time item with index {} " \
+                print("Warning: conflict during merging, setting must_be_work state: in the time item with index {} " \
                         + "(corresponds {}) item1 is {} whereas item2 is {}").format(index, get_time_for_index(index, merged_data.first_time), item1, item2)
                 merged_data.items[index] = State.must_be_work
                 continue
@@ -471,7 +472,7 @@ def calculate_time_info(data):
                 num_rest_items_from_list += 1
                 continue
 
-        print "ERROR: item =", item
+        print("ERROR: item =", item)
         raise RuntimeError()
 
     num_rest_items = num_rest_items_from_list
@@ -492,12 +493,12 @@ def str_timedelta(td):
     return ':'.join(str(td).split(':')[:2])
 
 def print_time_info(time_info):
-    print time_info
-    print "rest from list =", str_timedelta(int(time_info["num_rest_items_from_list"]) * DEFAULT_TIME_STEP_AS_TIMEDELTA())
-    print "work from list =", str_timedelta(int(time_info["num_work_items_from_list"]) * DEFAULT_TIME_STEP_AS_TIMEDELTA())
-    print "total rest =", str_timedelta(int(time_info["num_rest_items"]) * DEFAULT_TIME_STEP_AS_TIMEDELTA())
-    print "total work =", str_timedelta(int(time_info["num_work_items"]) * DEFAULT_TIME_STEP_AS_TIMEDELTA())
-    print "speed of rest ={:.2}".format( float(time_info["num_rest_items"]) / float(time_info["num_rest_items"] + time_info["num_work_items"]) )
+    print(time_info)
+    print("rest from list =", str_timedelta(int(time_info["num_rest_items_from_list"]) * DEFAULT_TIME_STEP_AS_TIMEDELTA()))
+    print("work from list =", str_timedelta(int(time_info["num_work_items_from_list"]) * DEFAULT_TIME_STEP_AS_TIMEDELTA()))
+    print("total rest =", str_timedelta(int(time_info["num_rest_items"]) * DEFAULT_TIME_STEP_AS_TIMEDELTA()))
+    print("total work =", str_timedelta(int(time_info["num_work_items"]) * DEFAULT_TIME_STEP_AS_TIMEDELTA()))
+    print("speed of rest ={:.2}".format( float(time_info["num_rest_items"]) / float(time_info["num_rest_items"] + time_info["num_work_items"]) ))
 
     TARGET_TIME = 5.5 # hours
     time_to_should_work_for_target = datetime.timedelta(hours = TARGET_TIME) - datetime.timedelta(seconds = int(time_info["num_work_items"]) * DEFAULT_TIME_STEP_IN_SECONDS())
@@ -506,12 +507,12 @@ def print_time_info(time_info):
         time_to_should_work_for_target_str = str(time_to_should_work_for_target)
     else:
         time_to_should_work_for_target_str = "-" + str(datetime.timedelta() - time_to_should_work_for_target)
-    print "TIME_TO_SHOULD_WORK_FOR_TARGET =", time_to_should_work_for_target_str
-    print "IDEAL_TIME_OF_TARGET =", ideal_time_of_target.strftime("%H:%M:%S")
+    print("TIME_TO_SHOULD_WORK_FOR_TARGET =", time_to_should_work_for_target_str)
+    print("IDEAL_TIME_OF_TARGET =", ideal_time_of_target.strftime("%H:%M:%S"))
 
 def print_data_as_list(data, should_shorten = False):
     if data == None:
-        print "No data"
+        print("No data")
         return
 
     assert(isinstance(data, Data))
@@ -547,7 +548,7 @@ def print_data_as_list(data, should_shorten = False):
                 str_prev_item = "R?"
 
         if (not should_shorten) or (diff_time_min > 2):
-            print "{} => {}  ({:3} min): {}".format(str_prev_time, str_cur_time, diff_time_min, str_prev_item)
+            print("{} => {}  ({:3} min): {}".format(str_prev_time, str_cur_time, diff_time_min, str_prev_item))
 
         if ( (prev_item == State.must_be_rest) or (prev_item == State.may_be_rest) ) and (diff_time_min > 2):
             list_rests.append(diff_time_min)
@@ -555,9 +556,9 @@ def print_data_as_list(data, should_shorten = False):
         prev_index = cur_index
         prev_item = cur_item
 
-    print "rests from lists:", list_rests
+    print("rests from lists:", list_rests)
     rests_from_spec_time_segments = [ int(x.num_items_rest) * DEFAULT_TIME_STEP_IN_SECONDS() // 60 for x in data.special_time_segments ]
-    print "rests from special time segments:", rests_from_spec_time_segments
+    print("rests from special time segments:", rests_from_spec_time_segments)
 
 
 def print_data_as_table(data1, data2 = None, data3 = None):
@@ -597,7 +598,7 @@ def print_data_as_table(data1, data2 = None, data3 = None):
     num_items = get_index_for_time(last_time, first_time) + 1
 
     table_rows = []
-    for cur_index in xrange(num_items):
+    for cur_index in range(num_items):
         index1 = convert_index_to_another_time_array(cur_index, first_time, data1.first_time)
         item1 = data1.items[index1]
         item2 = None
@@ -616,27 +617,26 @@ def print_data_as_table(data1, data2 = None, data3 = None):
     print_table(table_rows)
 
 
-def main_for_one_file(date_suffix, should_print_whole_table):
+def main_for_files(file1, file2, should_print_whole_table):
     LEN_SMALL_HRULE = 60
     LEN_BIG_HRULE = 80
     HRULE = "=" * LEN_SMALL_HRULE
     HEADING_HRULE = "=" * LEN_BIG_HRULE
-    what_parsing = "parsing {}".format(date_suffix) if date_suffix else "parsing current date"
+    name1 = os.path.basename(file1) if file1 is not None else None
+    name2 = os.path.basename(file2) if file2 is not None else None
+    what_parsing = "parsing {} and {}".format(name1, name2)
 
     print(HEADING_HRULE)
-    print "Begin " + what_parsing
-
-    file1 = LogFileHandling.current_worklog_path(date_suffix)
-    file2 = LogFileHandling.current_worklog_path_from_remote(date_suffix)
+    print("Begin " + what_parsing)
 
     (total_first_time, total_last_time) = FirstLastTimeDetector.get_first_last_time_from_files(file1, file2)
 
-    if os.path.isfile(file1):
+    if file1 and os.path.isfile(file1):
         reader1 = Reader(file1, total_first_time, total_last_time, is_remote=False)
     else:
         reader1 = None
 
-    if os.path.isfile(file2):
+    if file2 and os.path.isfile(file2):
         reader2 = Reader(file2, total_first_time, total_last_time, is_remote=True)
     else:
         reader2 = None
@@ -655,64 +655,105 @@ def main_for_one_file(date_suffix, should_print_whole_table):
 
     time_info = calculate_time_info(data_merged)
 
-    print (HRULE)
-    print "Local"
+    print((HRULE))
+    print("Local")
     print_data_as_list(data1)
-    print ""
-    print "Remote"
+    print("")
+    print("Remote")
     print_data_as_list(data2)
-    print ""
-    print "Merged"
+    print("")
+    print("Merged")
     print_data_as_list(data_merged)
 
-    print (HRULE)
-    print "Merged shortened"
+    print(HRULE)
+    print("Merged shortened")
     print_data_as_list(data_merged, True)
 
     if should_print_whole_table:
-        print (HRULE)
+        print(HRULE)
         print_data_as_table(data1, data2, data_merged)
 
-    print (HRULE)
+    print(HRULE)
     print_time_info(time_info)
 
-    print (HRULE)
-    print "End " + what_parsing
+    print(HRULE)
+    print("End " + what_parsing)
     print(HEADING_HRULE)
 
-def main(date_suffixes, should_print_whole_table):
+def main_for_one_date_suffix(date_suffix, should_print_whole_table):
+    file1 = LogFileHandling.current_worklog_path(date_suffix)
+    file2 = LogFileHandling.current_worklog_path_from_remote(date_suffix)
+    print(f'Date suffix = {date_suffix}')
+    print(f'file1 = {file1}')
+    print(f'file2 = {file2}')
+    main_for_files(file1, file2, should_print_whole_table)
+
+def main_for_date_suffixes(date_suffixes, should_print_whole_table):
     if not date_suffixes:
-        main_for_one_file(None, should_print_whole_table)
+        main_for_one_date_suffix(None, should_print_whole_table)
         return
 
     for date_suffix in date_suffixes:
-        main_for_one_file(date_suffix, should_print_whole_table)
+        main_for_one_date_suffix(date_suffix, should_print_whole_table)
 
-if __name__ == "__main__":
-#    ip_final_part = None
-#    if len(sys.argv) > 1:
-#        ip_final_part = int(sys.argv[1])
-#
-#    if ip_final_part:
-#        LogFileHandling.scp_from_remote(ip_final_part)
-
-    should_print_whole_table = False
+def extract_date_suffixes_from_inputs(inputs):
     date_suffixes = []
-    for cur_arg in sys.argv[1:]:
-        # TODO: use ArgumentParser
-
-        if (cur_arg == "all"):
-            should_print_whole_table = True
-            continue
-
+    for cur_arg in inputs:
         date_suffix = cur_arg
         winlog_prefix = "winlog_"
         if winlog_prefix in date_suffix:
-            print "Since input_param is", date_suffix, "remove the first part of it to get date_suffix"
+            print("Since input_param is", date_suffix, "remove the first part of it to get date_suffix")
             index = date_suffix.rfind(winlog_prefix )
             date_suffix = date_suffix[index + len(winlog_prefix):]
-        print "date_suffix =", date_suffix
+        print("date_suffix =", date_suffix)
         date_suffixes.append(date_suffix)
+    return date_suffixes
 
-    main(date_suffixes, should_print_whole_table)
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--should_print_whole_table", action="store_true", help="If should print the whole table")
+    parser.add_argument("--should_use_date_suffix", action="store_true",
+                        help="If the input values should be used as date suffixes, not files "
+                             "(at the moment the second remote file is implemented for date suffixes only)")
+    parser.add_argument("inputs", nargs="*", help="Input files or date suffixes")
+    args = parser.parse_args()
+
+    should_print_whole_table = args.should_print_whole_table
+    if args.should_use_date_suffix:
+        date_suffixes = extract_date_suffixes_from_inputs(args.inputs)
+        main_for_date_suffixes(date_suffixes, should_print_whole_table)
+        return
+
+    inputs = args.inputs
+    if not inputs:
+        inputs = [LogFileHandling.current_worklog_path(None)]
+
+    for input_file in inputs:
+        main_for_files(input_file, None, should_print_whole_table)
+
+
+if __name__ == "__main__":
+    main()
+
+#
+#
+#    should_print_whole_table = False
+#    date_suffixes = []
+#    for cur_arg in sys.argv[1:]:
+#        # TODO: use ArgumentParser
+#
+#        if (cur_arg == "all"):
+#            should_print_whole_table = True
+#            continue
+#
+#        date_suffix = cur_arg
+#        winlog_prefix = "winlog_"
+#        if winlog_prefix in date_suffix:
+#            print("Since input_param is", date_suffix, "remove the first part of it to get date_suffix")
+#            index = date_suffix.rfind(winlog_prefix )
+#            date_suffix = date_suffix[index + len(winlog_prefix):]
+#        print("date_suffix =", date_suffix)
+#        date_suffixes.append(date_suffix)
+#
+#    main(date_suffixes, should_print_whole_table)
 
