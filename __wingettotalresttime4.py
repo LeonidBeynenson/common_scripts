@@ -512,7 +512,7 @@ def print_time_info(time_info):
     print("TIME_TO_SHOULD_WORK_FOR_TARGET =", time_to_should_work_for_target_str)
     print("IDEAL_TIME_OF_TARGET =", ideal_time_of_target.strftime("%H:%M:%S"))
 
-def print_data_as_list(data, should_shorten = False):
+def print_data_as_list(data, should_shorten = False, num_minutes_to_print_in_short=2):
     if data == None:
         print("No data")
         return
@@ -549,7 +549,7 @@ def print_data_as_list(data, should_shorten = False):
             elif prev_item == State.may_be_rest:
                 str_prev_item = "R?"
 
-        if (not should_shorten) or (diff_time_min > 2):
+        if (not should_shorten) or (diff_time_min > num_minutes_to_print_in_short):
             print("{} => {}  ({:3} min): {}".format(str_prev_time, str_cur_time, diff_time_min, str_prev_item))
 
         if ( (prev_item == State.must_be_rest) or (prev_item == State.may_be_rest) ) and (diff_time_min > 2):
@@ -619,7 +619,8 @@ def print_data_as_table(data1, data2 = None, data3 = None):
     print_table(table_rows)
 
 
-def main_for_line_sequences(line_sequence1, line_sequence2, name1, name2, should_print_whole_table):
+def main_for_line_sequences(line_sequence1, line_sequence2, name1, name2, should_print_whole_table,
+                            very_short_print=False):
     LEN_SMALL_HRULE = 60
     LEN_BIG_HRULE = 80
     HRULE = "=" * LEN_SMALL_HRULE
@@ -656,18 +657,20 @@ def main_for_line_sequences(line_sequence1, line_sequence2, name1, name2, should
     time_info = calculate_time_info(data_merged)
 
     print((HRULE))
-    print("Local")
-    print_data_as_list(data1)
-    print("")
-    print("Remote")
-    print_data_as_list(data2)
-    print("")
-    print("Merged")
-    print_data_as_list(data_merged)
+    if not very_short_print:
+        print("Local")
+        print_data_as_list(data1)
+        print("")
+        print("Remote")
+        print_data_as_list(data2)
+        print("")
+        print("Merged")
+        print_data_as_list(data_merged)
 
-    print(HRULE)
+        print(HRULE)
     print("Merged shortened")
-    print_data_as_list(data_merged, True)
+    num_minutes_to_print_in_short = 2 if not very_short_print else 10
+    print_data_as_list(data_merged, True, num_minutes_to_print_in_short=num_minutes_to_print_in_short)
 
     if should_print_whole_table:
         print(HRULE)
@@ -685,12 +688,13 @@ def read_line_sequence_from_file(file_path):
         lines = list(f)
     return lines
 
-def main_for_files(file1, file2, should_print_whole_table):
+def main_for_files(file1, file2, should_print_whole_table, very_short_print=False):
     line_sequence1 = read_line_sequence_from_file(file1)
     line_sequence2 = read_line_sequence_from_file(file1)
     name1 = os.path.basename(file1) if file1 else None
     name2 = os.path.basename(file2) if file2 else None
-    return main_for_line_sequences(line_sequence1, line_sequence2, name1, name2, should_print_whole_table)
+    return main_for_line_sequences(line_sequence1, line_sequence2, name1, name2, should_print_whole_table,
+                                   very_short_print=very_short_print)
 
 def read_line_sequence_from_files(files):
     # TODO: add sorting of files
@@ -723,11 +727,12 @@ def split_line_sequence_by_dates(line_sequence):
     return line_sequences_by_dates
 
 
-def main_for_file_list(files1, should_print_whole_table):
+def main_for_file_list(files1, should_print_whole_table, very_short_print=False):
     line_sequence = read_line_sequence_from_files(files1)
     line_sequences_by_dates = split_line_sequence_by_dates(line_sequence)
     for cur_date, line_sequence in line_sequences_by_dates.items():
-        main_for_line_sequences(line_sequence, None, cur_date, None, should_print_whole_table)
+        main_for_line_sequences(line_sequence, None, cur_date, None, should_print_whole_table,
+                                very_short_print=very_short_print)
 
 
 def main_for_one_date_suffix(date_suffix, should_print_whole_table):
@@ -765,6 +770,8 @@ def main():
     parser.add_argument("--should_use_date_suffix", action="store_true",
                         help="If the input values should be used as date suffixes, not files "
                              "(at the moment the second remote file is implemented for date suffixes only)")
+    parser.add_argument("--short", action="store_true",
+                        help="If should print very shortened time list only")
     parser.add_argument("inputs", nargs="*", help="Input files or date suffixes")
     args = parser.parse_args()
 
@@ -778,7 +785,7 @@ def main():
     if not inputs:
         inputs = [LogFileHandling.current_worklog_path(None)]
 
-    main_for_file_list(inputs, should_print_whole_table)
+    main_for_file_list(inputs, should_print_whole_table, very_short_print=args.short)
 
 
 if __name__ == "__main__":
