@@ -27,6 +27,9 @@ rest_re = re.compile(r'^rest +(\d+) +min')
 rest_d_re = re.compile(r'^rest *$')
 rest_q_re = re.compile(r'^rest *[?]+ *$')
 
+def END_OF_DAY_TIME():
+    return datetime.time(6)
+
 def DEFAULT_TIME_STEP_IN_SECONDS():
     return int(15)
 
@@ -228,32 +231,31 @@ class FirstLastTimeDetector:
 
 
     @staticmethod
-    def get_first_last_time_from_file(file_path):
+    def get_first_last_time_from_line_sequence(line_sequence):
         first_time = None
         last_time = None
 
-        if not file_path or not os.path.isfile(file_path):
+        if not line_sequence:
             return (None, None)
 
-        with open(file_path, "r") as f:
-            for line in f:
-                date_match = date_re.match(line)
-                if not date_match:
-                    continue
-                cur_time_str = date_match.group()
-                cur_time = datetime.datetime.strptime(cur_time_str, "%Y-%m-%d_%H-%M-%S")
-                if not first_time:
-                    first_time = cur_time
-                last_time = cur_time
+        for line in line_sequence:
+            date_match = date_re.match(line)
+            if not date_match:
+                continue
+            cur_time_str = date_match.group()
+            cur_time = datetime.datetime.strptime(cur_time_str, "%Y-%m-%d_%H-%M-%S")
+            if not first_time:
+                first_time = cur_time
+            last_time = cur_time
 
         first_time = FirstLastTimeDetector.round_sec_in_datetime(first_time, should_floor = True)
         last_time = FirstLastTimeDetector.round_sec_in_datetime(last_time, should_floor = False)
         return (first_time, last_time)
 
     @staticmethod
-    def get_first_last_time_from_files(file_path1, file_path2):
-        (first_time1, last_time1) = FirstLastTimeDetector.get_first_last_time_from_file(file_path1)
-        (first_time2, last_time2) = FirstLastTimeDetector.get_first_last_time_from_file(file_path2)
+    def get_first_last_time_from_line_sequences(line_sequence1, line_sequence2):
+        (first_time1, last_time1) = FirstLastTimeDetector.get_first_last_time_from_line_sequence(line_sequence1)
+        (first_time2, last_time2) = FirstLastTimeDetector.get_first_last_time_from_line_sequence(line_sequence2)
         if (first_time2 == None) or (last_time2 == None):
             return (first_time1, last_time1)
         if (first_time1 == None) or (last_time1 == None):
@@ -261,8 +263,9 @@ class FirstLastTimeDetector:
         return ( min(first_time1, first_time2), max(last_time1, last_time2) )
 
 class Reader:
-    def __init__(self, file_path, first_time, last_time, is_remote):
-        self.file_path = file_path
+    def __init__(self, line_sequence, name, first_time, last_time, is_remote):
+        self.line_sequence = line_sequence
+        self.name = name
         self.first_time = first_time
         self.last_time = last_time
         self.is_remote = is_remote;
@@ -301,16 +304,16 @@ class Reader:
         if not self.is_rest and not self.is_rest_q and not self.is_rest_definitely:
             cur_state = State.may_be_work
         elif self.is_rest_q and self.is_rest_definitely:
-            print("WARNING: in the file '{}' in the time segment from {} to {} both 'definitely rest' and 'may be rest' marks are present " \
-                    + "-- make the segment to be 'definitely rest'").format(self.file_path, self.prev_filled_time, self.cur_time)
+            print("WARNING: in the '{}' in the time segment from {} to {} both 'definitely rest' and 'may be rest' marks are present " \
+                    + "-- make the segment to be 'definitely rest'").format(self.name, self.prev_filled_time, self.cur_time)
             cur_state = State.must_be_rest
         elif self.is_rest and self.is_rest_definitely:
-            print("WARNING: in the file '{}' in the time segment from {} to {} both 'definitely rest' and 'rest' marks are present " \
-                    + "-- make the segment to be 'definitely rest'").format(self.file_path, self.prev_filled_time, self.cur_time)
+            print("WARNING: in the '{}' in the time segment from {} to {} both 'definitely rest' and 'rest' marks are present " \
+                    + "-- make the segment to be 'definitely rest'").format(self.name, self.prev_filled_time, self.cur_time)
             cur_state = State.must_be_rest
         elif self.is_rest and self.is_rest_q:
-            print("WARNING: in the file '{}' in the time segment from {} to {} both 'may be rest' and 'rest' marks are present " \
-                    + "-- make the segment to be 'may be rest'").format(self.file_path, self.prev_filled_time, cur_time)
+            print("WARNING: in the '{}' in the time segment from {} to {} both 'may be rest' and 'rest' marks are present " \
+                    + "-- make the segment to be 'may be rest'").format(self.name, self.prev_filled_time, cur_time)
             cur_state = State.may_be_rest
         elif  self.is_rest_definitely:
             cur_state = State.must_be_rest
@@ -345,37 +348,36 @@ class Reader:
         data = Data(self.first_time, self.last_time)
         self.clean_state(prev_index = None, prev_time = None)
 
-        with open(self.file_path, "r") as f:
-            for line in f:
-                is_empty_line = (len(line.strip()) == 0)
-                if is_empty_line:
-                    continue
+        for line in self.line_sequence:
+            is_empty_line = (len(line.strip()) == 0)
+            if is_empty_line:
+                continue
 
-                date_match = date_re.match(line)
-                rest_match = rest_re.match(line)
-                rest_d_match = rest_d_re.match(line)
-                rest_q_match = rest_q_re.match(line)
+            date_match = date_re.match(line)
+            rest_match = rest_re.match(line)
+            rest_d_match = rest_d_re.match(line)
+            rest_q_match = rest_q_re.match(line)
 
-                if date_match:
-                    cur_time_str = date_match.group()
-                    cur_time = datetime.datetime.strptime(cur_time_str, "%Y-%m-%d_%H-%M-%S")
-                    cur_index = get_index_for_time(cur_time, self.first_time)
-                    assert( (cur_index >= 0) and (cur_index < len(data.items)) )
-                    self.fill_indexes_in_data(data, cur_index, cur_time)
+            if date_match:
+                cur_time_str = date_match.group()
+                cur_time = datetime.datetime.strptime(cur_time_str, "%Y-%m-%d_%H-%M-%S")
+                cur_index = get_index_for_time(cur_time, self.first_time)
+                assert( (cur_index >= 0) and (cur_index < len(data.items)) )
+                self.fill_indexes_in_data(data, cur_index, cur_time)
 
-                    self.clean_state(prev_index = cur_index, prev_time = cur_time)
+                self.clean_state(prev_index = cur_index, prev_time = cur_time)
 
-                    continue
+                continue
 
-                if rest_match:
-                    self.is_rest = True
-                    self.total_sum_rest_minutes_for_block += int(rest_match.group(1))
+            if rest_match:
+                self.is_rest = True
+                self.total_sum_rest_minutes_for_block += int(rest_match.group(1))
 
-                if rest_q_match:
-                    self.is_rest_q = True
+            if rest_q_match:
+                self.is_rest_q = True
 
-                if rest_d_match:
-                    self.is_rest_definitely = True
+            if rest_d_match:
+                self.is_rest_definitely = True
 
         return data
 
@@ -617,27 +619,25 @@ def print_data_as_table(data1, data2 = None, data3 = None):
     print_table(table_rows)
 
 
-def main_for_files(file1, file2, should_print_whole_table):
+def main_for_line_sequences(line_sequence1, line_sequence2, name1, name2, should_print_whole_table):
     LEN_SMALL_HRULE = 60
     LEN_BIG_HRULE = 80
     HRULE = "=" * LEN_SMALL_HRULE
     HEADING_HRULE = "=" * LEN_BIG_HRULE
-    name1 = os.path.basename(file1) if file1 is not None else None
-    name2 = os.path.basename(file2) if file2 is not None else None
     what_parsing = "parsing {} and {}".format(name1, name2)
 
     print(HEADING_HRULE)
     print("Begin " + what_parsing)
 
-    (total_first_time, total_last_time) = FirstLastTimeDetector.get_first_last_time_from_files(file1, file2)
+    (total_first_time, total_last_time) = FirstLastTimeDetector.get_first_last_time_from_line_sequences(line_sequence1, line_sequence2)
 
-    if file1 and os.path.isfile(file1):
-        reader1 = Reader(file1, total_first_time, total_last_time, is_remote=False)
+    if line_sequence1:
+        reader1 = Reader(line_sequence1, name1, total_first_time, total_last_time, is_remote=False)
     else:
         reader1 = None
 
-    if file2 and os.path.isfile(file2):
-        reader2 = Reader(file2, total_first_time, total_last_time, is_remote=True)
+    if line_sequence2:
+        reader2 = Reader(line_sequence2, name2, total_first_time, total_last_time, is_remote=True)
     else:
         reader2 = None
 
@@ -679,6 +679,56 @@ def main_for_files(file1, file2, should_print_whole_table):
     print(HRULE)
     print("End " + what_parsing)
     print(HEADING_HRULE)
+
+def read_line_sequence_from_file(file_path):
+    with open(file_path) as f:
+        lines = list(f)
+    return lines
+
+def main_for_files(file1, file2, should_print_whole_table):
+    line_sequence1 = read_line_sequence_from_file(file1)
+    line_sequence2 = read_line_sequence_from_file(file1)
+    name1 = os.path.basename(file1) if file1 else None
+    name2 = os.path.basename(file2) if file2 else None
+    return main_for_line_sequences(line_sequence1, line_sequence2, name1, name2, should_print_whole_table)
+
+def read_line_sequence_from_files(files):
+    # TODO: add sorting of files
+    separator = []
+    line_sequence = []
+    for file1 in files:
+        cur_line_sequence = read_line_sequence_from_file(file1)
+        line_sequence += separator + cur_line_sequence
+        separator = ["rest"]
+    return line_sequence
+
+def split_line_sequence_by_dates(line_sequence):
+    cur_day_begin_date = None
+    line_sequences_by_dates = {}
+    for line in line_sequence:
+        date_match = date_re.match(line)
+        if not date_match:
+            if cur_day_begin_date:
+                line_sequences_by_dates[cur_day_begin_date].append(line)
+            else:
+                print(f"WARNING: skipping the first line '{line}'")
+            continue
+        cur_time_str = date_match.group()
+        cur_time = datetime.datetime.strptime(cur_time_str, "%Y-%m-%d_%H-%M-%S")
+        cur_date = cur_time.date()
+        if cur_time.time() < END_OF_DAY_TIME():
+            cur_date -= datetime.timedelta(days=1)
+        cur_day_begin_date = cur_date.strftime("%Y-%m-%d")
+        line_sequences_by_dates.setdefault(cur_day_begin_date, []).append(line)
+    return line_sequences_by_dates
+
+
+def main_for_file_list(files1, should_print_whole_table):
+    line_sequence = read_line_sequence_from_files(files1)
+    line_sequences_by_dates = split_line_sequence_by_dates(line_sequence)
+    for cur_date, line_sequence in line_sequences_by_dates.items():
+        main_for_line_sequences(line_sequence, None, cur_date, None, should_print_whole_table)
+
 
 def main_for_one_date_suffix(date_suffix, should_print_whole_table):
     file1 = LogFileHandling.current_worklog_path(date_suffix)
@@ -728,8 +778,7 @@ def main():
     if not inputs:
         inputs = [LogFileHandling.current_worklog_path(None)]
 
-    for input_file in inputs:
-        main_for_files(input_file, None, should_print_whole_table)
+    main_for_file_list(inputs, should_print_whole_table)
 
 
 if __name__ == "__main__":
