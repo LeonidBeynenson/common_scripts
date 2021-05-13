@@ -11,6 +11,10 @@ import copy
 import datetime
 import math
 import texttable as tt
+import yaml
+
+def DEFAULT_TARGET_TIME_IN_HOURS():
+    return 5.5 # hours
 
 def print_table(list_of_rows):
     tab = tt.Texttable(max_width = 0)
@@ -494,7 +498,7 @@ def calculate_time_info(data):
 def str_timedelta(td):
     return ':'.join(str(td).split(':')[:2])
 
-def print_time_info(time_info):
+def print_time_info(time_info, target_time_in_hours=None):
     print(time_info)
     print("rest from list =", str_timedelta(int(time_info["num_rest_items_from_list"]) * DEFAULT_TIME_STEP_AS_TIMEDELTA()))
     print("work from list =", str_timedelta(int(time_info["num_work_items_from_list"]) * DEFAULT_TIME_STEP_AS_TIMEDELTA()))
@@ -502,8 +506,14 @@ def print_time_info(time_info):
     print("total work =", str_timedelta(int(time_info["num_work_items"]) * DEFAULT_TIME_STEP_AS_TIMEDELTA()))
     print("speed of rest ={:.2}".format( float(time_info["num_rest_items"]) / float(time_info["num_rest_items"] + time_info["num_work_items"]) ))
 
-    TARGET_TIME = 5.5 # hours
-    time_to_should_work_for_target = datetime.timedelta(hours = TARGET_TIME) - datetime.timedelta(seconds = int(time_info["num_work_items"]) * DEFAULT_TIME_STEP_IN_SECONDS())
+    if target_time_in_hours is None:
+        target_time_in_hours = DEFAULT_TARGET_TIME_IN_HOURS()
+
+    time_to_should_work_for_target = (
+            datetime.timedelta(hours = target_time_in_hours)
+            -
+            datetime.timedelta(seconds = int(time_info["num_work_items"]) * DEFAULT_TIME_STEP_IN_SECONDS())
+            )
     ideal_time_of_target = datetime.datetime.now() + time_to_should_work_for_target
     if time_to_should_work_for_target.days >= 0:
         time_to_should_work_for_target_str = str(time_to_should_work_for_target)
@@ -618,9 +628,14 @@ def print_data_as_table(data1, data2 = None, data3 = None):
         table_rows.append([str_cur_time, str_for_item(item1), str_for_item(item2), str_for_item(item3)])
     print_table(table_rows)
 
+def _skip_up_to_char(s, c):
+    if c not in s:
+        return s
+    return s[s.rindex(c)+1:]
 
 def main_for_line_sequences(line_sequence1, line_sequence2, name1, name2, should_print_whole_table,
-                            very_short_print=False):
+                            very_short_print=False,
+                            target_time_table=None):
     LEN_SMALL_HRULE = 60
     LEN_BIG_HRULE = 80
     HRULE = "=" * LEN_SMALL_HRULE
@@ -677,7 +692,16 @@ def main_for_line_sequences(line_sequence1, line_sequence2, name1, name2, should
         print_data_as_table(data1, data2, data_merged)
 
     print(HRULE)
-    print_time_info(time_info)
+    if target_time_table:
+        name_for_time_table = name1
+        name_for_time_table = _skip_up_to_char(name_for_time_table, '_')
+        name_for_time_table = _skip_up_to_char(name_for_time_table, '/')
+        target_time_in_hours = target_time_table.get(name_for_time_table, DEFAULT_TARGET_TIME_IN_HOURS())
+        print(f'target_time_in_hours={target_time_in_hours}')
+    else:
+        target_time_in_hours = DEFAULT_TARGET_TIME_IN_HOURS()
+
+    print_time_info(time_info, target_time_in_hours)
 
     print(HRULE)
     print("End " + what_parsing)
@@ -727,12 +751,20 @@ def split_line_sequence_by_dates(line_sequence):
     return line_sequences_by_dates
 
 
-def main_for_file_list(files1, should_print_whole_table, very_short_print=False):
+def main_for_file_list(files1, should_print_whole_table, very_short_print=False,
+                       target_time_table_path=None):
+    if target_time_table_path:
+        with open(target_time_table_path) as f:
+            target_time_table = yaml.safe_load(f)
+    else:
+        target_time_table = None
+
     line_sequence = read_line_sequence_from_files(files1)
     line_sequences_by_dates = split_line_sequence_by_dates(line_sequence)
     for cur_date, line_sequence in line_sequences_by_dates.items():
         main_for_line_sequences(line_sequence, None, cur_date, None, should_print_whole_table,
-                                very_short_print=very_short_print)
+                                very_short_print=very_short_print,
+                                target_time_table=target_time_table)
 
 
 def main_for_one_date_suffix(date_suffix, should_print_whole_table):
@@ -772,6 +804,9 @@ def main():
                              "(at the moment the second remote file is implemented for date suffixes only)")
     parser.add_argument("--short", action="store_true",
                         help="If should print very shortened time list only")
+    parser.add_argument("--target-time-table", nargs='?', const='/home/lbeynens/worklog/time_table.yml',
+                        help="The path to the time table -- a YAML file with dict of target time-s in format {<date>: <time in hours>}, "
+                              "(e.g. {'2021-04-30':5.5, '2021-05-01': 0})")
     parser.add_argument("inputs", nargs="*", help="Input files or date suffixes")
     args = parser.parse_args()
 
@@ -785,7 +820,8 @@ def main():
     if not inputs:
         inputs = [LogFileHandling.current_worklog_path(None)]
 
-    main_for_file_list(inputs, should_print_whole_table, very_short_print=args.short)
+    main_for_file_list(inputs, should_print_whole_table, very_short_print=args.short,
+                       target_time_table_path=args.target_time_table)
 
 
 if __name__ == "__main__":
