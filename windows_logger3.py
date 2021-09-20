@@ -117,7 +117,7 @@ class TaskBarApp(wx.Frame):
         self.Write(log_line)
 
     def Write(self, log_line):
-        f=open(self.LOG_FILE_PATH, 'a')
+        f=open(self.LOG_FILE_PATH, 'a', encoding="utf8", errors='ignore')
         f.write (log_line)
         f.close()
 
