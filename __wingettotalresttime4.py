@@ -495,17 +495,15 @@ def calculate_time_info(data):
             "num_rest_items": num_rest_items,
             "num_work_items": num_work_items}
 
-def str_timedelta(td):
-    return ':'.join(str(td).split(':')[:2])
+def str_timedelta(td, num_colons=1):
+    if td < datetime.timedelta():
+        str_sign = '-'
+        td = -td
+    else:
+        str_sign = ''
+    return str_sign + ':'.join(str(td).split(':')[:(num_colons+1)])
 
-def print_time_info(time_info, target_time_in_hours=None):
-    print(time_info)
-    print("rest from list =", str_timedelta(int(time_info["num_rest_items_from_list"]) * DEFAULT_TIME_STEP_AS_TIMEDELTA()))
-    print("work from list =", str_timedelta(int(time_info["num_work_items_from_list"]) * DEFAULT_TIME_STEP_AS_TIMEDELTA()))
-    print("total rest =", str_timedelta(int(time_info["num_rest_items"]) * DEFAULT_TIME_STEP_AS_TIMEDELTA()))
-    print("total work =", str_timedelta(int(time_info["num_work_items"]) * DEFAULT_TIME_STEP_AS_TIMEDELTA()))
-    print("speed of rest ={:.2}".format( float(time_info["num_rest_items"]) / float(time_info["num_rest_items"] + time_info["num_work_items"]) ))
-
+def calc_time_to_should_work_for_target(time_info, target_time_in_hours=None):
     if target_time_in_hours is None:
         target_time_in_hours = DEFAULT_TARGET_TIME_IN_HOURS()
 
@@ -514,12 +512,18 @@ def print_time_info(time_info, target_time_in_hours=None):
             -
             datetime.timedelta(seconds = int(time_info["num_work_items"]) * DEFAULT_TIME_STEP_IN_SECONDS())
             )
+    return time_to_should_work_for_target
+
+def print_time_info(time_info, time_to_should_work_for_target):
+    print(time_info)
+    print("rest from list =", str_timedelta(int(time_info["num_rest_items_from_list"]) * DEFAULT_TIME_STEP_AS_TIMEDELTA()))
+    print("work from list =", str_timedelta(int(time_info["num_work_items_from_list"]) * DEFAULT_TIME_STEP_AS_TIMEDELTA()))
+    print("total rest =", str_timedelta(int(time_info["num_rest_items"]) * DEFAULT_TIME_STEP_AS_TIMEDELTA()))
+    print("total work =", str_timedelta(int(time_info["num_work_items"]) * DEFAULT_TIME_STEP_AS_TIMEDELTA()))
+    print("speed of rest ={:.2}".format( float(time_info["num_rest_items"]) / float(time_info["num_rest_items"] + time_info["num_work_items"]) ))
+
     ideal_time_of_target = datetime.datetime.now() + time_to_should_work_for_target
-    if time_to_should_work_for_target.days >= 0:
-        time_to_should_work_for_target_str = str(time_to_should_work_for_target)
-    else:
-        time_to_should_work_for_target_str = "-" + str(datetime.timedelta() - time_to_should_work_for_target)
-    print("TIME_TO_SHOULD_WORK_FOR_TARGET =", time_to_should_work_for_target_str)
+    print("TIME_TO_SHOULD_WORK_FOR_TARGET =", str_timedelta(time_to_should_work_for_target, num_colons=2))
     print("IDEAL_TIME_OF_TARGET =", ideal_time_of_target.strftime("%H:%M:%S"))
 
 def print_data_as_list(data, should_shorten = False, num_minutes_to_print_in_short=2):
@@ -701,14 +705,16 @@ def main_for_line_sequences(line_sequence1, line_sequence2, name1, name2, should
     else:
         target_time_in_hours = DEFAULT_TARGET_TIME_IN_HOURS()
 
-    print_time_info(time_info, target_time_in_hours)
+    time_to_should_work_for_target = calc_time_to_should_work_for_target(time_info, target_time_in_hours)
+    print_time_info(time_info, time_to_should_work_for_target)
 
     print(HRULE)
     print("End " + what_parsing)
     print(HEADING_HRULE)
+    return time_to_should_work_for_target
 
 def read_line_sequence_from_file(file_path):
-    with open(file_path) as f:
+    with open(file_path, encoding="utf8", errors='ignore') as f:
         lines = list(f)
     return lines
 
@@ -761,10 +767,16 @@ def main_for_file_list(files1, should_print_whole_table, very_short_print=False,
 
     line_sequence = read_line_sequence_from_files(files1)
     line_sequences_by_dates = split_line_sequence_by_dates(line_sequence)
+
+    summary_dt = datetime.timedelta()
     for cur_date, line_sequence in line_sequences_by_dates.items():
-        main_for_line_sequences(line_sequence, None, cur_date, None, should_print_whole_table,
-                                very_short_print=very_short_print,
-                                target_time_table=target_time_table)
+        dt = main_for_line_sequences(line_sequence, None, cur_date, None, should_print_whole_table,
+                                     very_short_print=very_short_print,
+                                     target_time_table=target_time_table)
+        summary_dt += dt
+
+    print("SUM OF TIME_TO_SHOULD_WORK_FOR_TARGET-s =", str_timedelta(summary_dt, num_colons=2))
+    print("SUM OF TIME_TO_SHOULD_WORK_FOR_TARGET-s in DAYS = {:.3}".format(summary_dt / datetime.timedelta(hours = DEFAULT_TARGET_TIME_IN_HOURS())))
 
 
 def main_for_one_date_suffix(date_suffix, should_print_whole_table):
