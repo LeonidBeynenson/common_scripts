@@ -10,7 +10,7 @@ last_line = None
 
 for line in sys.stdin:
     if last_line:
-        print last_line,
+        print(last_line, end="")
 
     if not first_line:
         first_line = line
@@ -33,6 +33,6 @@ if first_date_match and last_date_match:
 
     numsec = int(dt_time.total_seconds())
     nummin = int(math.ceil( (numsec + 10.0) / 60.0))
-    print "\nrest {} min\n".format(nummin)
+    print("\nrest {} min\n".format(nummin))
 
-print last_line,
+print(last_line, end="")
