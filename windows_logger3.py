@@ -4,10 +4,22 @@
 
 import wx
 from win32gui import GetWindowText, GetForegroundWindow
-from time import strftime, localtime, time
+from time import strftime, localtime, time, sleep
 from ctypes import windll, Structure, c_uint, sizeof, byref
 import os #, time
 #from datetime import datetime
+import psutil
+
+def is_daemon_run():
+    procs = [p for p in psutil.process_iter() if 'python' in p.name()]
+    procs = [p for p in procs if p.pid != os.getpid()]
+    cur_file_name = os.path.basename(__file__)
+    for p in procs:
+        cmdline = p.cmdline()
+        if len(cmdline) > 1 and os.path.basename(cmdline[1]) == cur_file_name:
+            print(f'Found existing daemon process pid={p.pid}')
+            return True
+    return False
 
 
 class TaskBarApp(wx.Frame):
@@ -141,6 +153,10 @@ class MyApp(wx.App):
         return True
 
 def main():
+    if is_daemon_run():
+        print('The daemon is already run -- exiting')
+        sleep(5)
+        return 0
     app = MyApp(0)
     app.MainLoop()
 
