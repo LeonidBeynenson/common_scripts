@@ -53,6 +53,9 @@ class TaskBarApp(wx.Frame):
         self.Show(True)
         self.lastInputInfo = self.LASTINPUTINFO()
         self.lastInputInfo.cbSize = sizeof(self.lastInputInfo)
+        if self.DoesLogFileExist():
+            print(f"Log file {self.LOG_FILE_PATH} exists, add rest line")
+            self.Write("\nrest ????????\n\n")
         self.WriteLog("__LOGGERSTART__", 0)
 
     def OnTaskBarLeftDClick(self, evt):
@@ -127,6 +130,9 @@ class TaskBarApp(wx.Frame):
     def WriteLog(self, text, idle_time):
         log_line = '%s\t%s\t%-100s\t%f sec\n' % (self.Now(), self.COMPUTER_PREFIX, text, float(idle_time))
         self.Write(log_line)
+
+    def DoesLogFileExist(self):
+        return os.path.isfile(self.LOG_FILE_PATH)
 
     def Write(self, log_line):
         f=open(self.LOG_FILE_PATH, 'a', encoding="utf8", errors='ignore')
