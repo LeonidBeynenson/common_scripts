@@ -1,0 +1,1 @@
+cygstart.exe $(cygpath -a  -w .)

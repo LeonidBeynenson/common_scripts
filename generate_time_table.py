@@ -1,6 +1,6 @@
 from datetime import date, timedelta
-sdate = date(2021, 4, 1)
-edate = date(2021, 12, 31)
+sdate = date(2022, 1, 1)
+edate = date(2022, 12, 31)
 delta = edate - sdate
 for i in range(delta.days + 1):
     cur_date = sdate + timedelta(days=i)
