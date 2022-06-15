@@ -1,5 +1,6 @@
-#!/bin/sh
+#!/bin/bash
 cd /home/lbeynens//bin/
+source ~/PrimaryVenv/venv_win_logger_1/bin/activate
 #./logger.py winlog_`ddate` 30 stopfile 2>>2_stream.log
 python ./daemon_is_screen_locked.py /home/lbeynens/worklog/IS_LOCKED
 
