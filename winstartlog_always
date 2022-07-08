@@ -1,5 +1,6 @@
-#!/bin/sh
+#!/bin/bash
 cd /home/lbeynens//bin/linux-app-logger
+source ~/PrimaryVenv/venv_win_logger_1/bin/activate
 #./logger.py winlog_`ddate` 30 stopfile 2>>2_stream.log
-./logger.py ~/worklog 15 D /home/lbeynens/worklog/IS_LOCKED 2>>2_stream.log
+python ./logger.py ~/worklog 15 D /home/lbeynens/worklog/IS_LOCKED 2>>2_stream.log
 

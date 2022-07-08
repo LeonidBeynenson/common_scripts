@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 winchecklog > /dev/null
 if [ $? != 0 ]; then

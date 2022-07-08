@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3.8
 import os, sys, time
 
 import daemon
@@ -9,28 +9,40 @@ with open(log_file, 'w') as f:
     f.write("")
 
 with daemon.DaemonContext():
-    cmd = subprocess.Popen(["gdbus monitor -e -d com.canonical.Unity -o /com/canonical/Unity/Session"],
+    cmd = subprocess.Popen(["dbus-monitor --session \"type='signal',interface='org.gnome.ScreenSaver'\""],
             shell=True, stdout=subprocess.PIPE)
 
+    prepare = False
+    should_write = False
+    log_string = ""
     while True:
         time.sleep(0.1)
 #        with open(log_file, 'a') as f:
 #            f.write("========\n")
         try:
             line = cmd.stdout.readline()
-            print line
+            line = line.decode("utf-8")
+            print(line)
 
-            if "com.canonical.Unity.Session.Unlocked" in line:
-                log_string = "Unlocked\n"
-            elif "com.canonical.Unity.Session.Locked" in line:
+            if "path=/org/gnome/ScreenSaver; interface=org.gnome.ScreenSaver; member=ActiveChanged" in line:
+                prepare = True
+                print(" - set prepare")
+                continue
+
+            if prepare and "boolean true" in line:
                 log_string = "Locked\n"
+                should_write = True
+            elif prepare and "boolean false" in line:
+                log_string = "Unlocked\n"
+                should_write = True
             else:
-                log_string = ""
+                should_write = False
+            prepare = False
 
-
-            if log_string:
+            if should_write:
                 with open(log_file, 'w') as f:
                     f.write(log_string)
+                print(f" - wrote {log_string}")
 
         except Exception:
             import traceback
