@@ -1,2 +1,4 @@
-call C:\ProgramData\Anaconda3\condabin\conda.bat activate p38
-call python C:\cygwin64\home\lbeynens\bin\windows_logger3.py
+call C:\ProgramData\Anaconda3\condabin\conda.bat activate p39
+FOR /F "tokens=* USEBACKQ" %%F IN (`C:\cygwin64\bin\cygpath.exe -w -a ~/`) DO (SET myhomepath=%%F)
+ECHO %myhomepath%
+call python %myhomepath%\bin\windows_logger3.py

@@ -9,6 +9,10 @@ from ctypes import windll, Structure, c_uint, sizeof, byref
 import os #, time
 #from datetime import datetime
 import psutil
+import sys
+
+# This var is used for a rude hack with global vars, sorry
+USERNAME=os.environ["USERNAME"]
 
 def is_daemon_run():
     procs = [p for p in psutil.process_iter() if 'python' in p.name()]
@@ -23,17 +27,17 @@ def is_daemon_run():
 
 
 class TaskBarApp(wx.Frame):
-    def __init__(self, parent, id, title):
+    def __init__(self, parent, id, title, username="lbeynens"):
         wx.Frame.__init__(self, parent, -1, title, size = (1, 1), style=wx.FRAME_NO_TASKBAR|wx.NO_FULL_REPAINT_ON_RESIZE)
 
         self.TIMESTEP = 10000 #ms
         self.WAS_ACTIVE = True
         self.TIME_OF_SCREENSAVER_START = 0
 
-        self.LOG_FILE_FOLDER = "C:/cygwin64/home/lbeynens/worklog/"
+        self.LOG_FILE_FOLDER = f"C:/cygwin64/home/{username}/worklog/"
         self.LOG_FILE_PATH = os.path.join(self.LOG_FILE_FOLDER, "winlog_" + self.CurDate())
 
-        self.ICONS_FOLDER = "C:/cygwin64/home/lbeynens/bin/"
+        self.ICONS_FOLDER = f"C:/cygwin64/home/{username}/bin/"
         self.LOGON_ICON_PATH = os.path.join(self.ICONS_FOLDER, 'logon.ico')
         self.LOGOFF_ICON_PATH = os.path.join(self.ICONS_FOLDER, 'logoff.ico')
 
@@ -153,7 +157,9 @@ class TaskBarApp(wx.Frame):
 
 class MyApp(wx.App):
     def OnInit(self):
-        frame = TaskBarApp(None, -1, ' ')
+        self.username=USERNAME
+        print(f"self.username={self.username}")
+        frame = TaskBarApp(None, -1, ' ', self.username)
         frame.Center(wx.BOTH)
         frame.Show(False)
         return True
@@ -161,7 +167,7 @@ class MyApp(wx.App):
 def main():
     if is_daemon_run():
         print('The daemon is already run -- exiting')
-        sleep(5)
+        sleep(2)
         return 0
     app = MyApp(0)
     app.MainLoop()
