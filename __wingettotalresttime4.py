@@ -14,7 +14,7 @@ import texttable as tt
 import yaml
 
 def DEFAULT_TARGET_TIME_IN_HOURS():
-    return 5.5 # hours
+    return 6.0 # hours
 
 def print_table(list_of_rows):
     tab = tt.Texttable(max_width = 0)
